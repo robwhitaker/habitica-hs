@@ -19,6 +19,17 @@ build-type:          Simple
 extra-source-files:  CHANGELOG.md
 
 library
+  ghc-options:         -Wall
+                       -fwarn-incomplete-uni-patterns
+                       -fwarn-tabs
+                       -fwarn-incomplete-record-updates
+                       -fno-warn-missing-signatures
+                       -fno-warn-type-defaults
+                       -Werror
+                       -Wwarn=unused-imports
+                       -Wwarn=unused-local-binds
+                       -Wwarn=unused-matches
+                       -Wwarn=unused-do-bind
   exposed-modules:     Web.Habitica
                      , Web.Habitica.Request
                      , Web.Habitica.Types

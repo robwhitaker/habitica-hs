@@ -1,24 +1,24 @@
+{-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE RecordWildCards   #-}
 
 module Web.Habitica.Types where
 
-import Data.UUID (UUID)
-import Data.Text (Text)
-import Data.Time (UTCTime)
-import Data.Time.Clock.POSIX (POSIXTime)
-import Data.Char (toLower)
+import           Data.Char             (toLower)
+import           Data.Text             (Text)
+import           Data.Time             (UTCTime)
+import           Data.Time.Clock.POSIX (POSIXTime)
+import           Data.UUID             (UUID)
 
-import qualified Data.Aeson as Aeson
-import Data.Aeson.Types (Pair)
-import Data.Aeson (FromJSON, ToJSON, (.:), (.:?), (.=))
+import           Data.Aeson            (FromJSON, ToJSON, (.:), (.:?), (.=))
+import qualified Data.Aeson            as Aeson
+import           Data.Aeson.Types      (Pair)
 
 data TaskChecklistItem = TaskChecklistItem
     { ciCompleted :: Bool
-    , ciText :: Text
-    , ciId :: UUID
-    , ciLinkId :: Maybe Text -- type is text in Habitica code, but not sure if it should really be UUID maybe?
+    , ciText      :: Text
+    , ciId        :: UUID
+    , ciLinkId    :: Maybe Text -- type is text in Habitica code, but not sure if it should really be UUID maybe?
     } deriving (Show, Eq, Ord)
 
 instance FromJSON TaskChecklistItem where
@@ -39,9 +39,9 @@ instance ToJSON TaskChecklistItem where
             ]
 
 data TaskHistoryItem = TaskHistoryItem
-    { historyValue :: Double
-    , historyDate :: POSIXTime
-    , historyScoredUp :: Maybe Int -- only exists for habits
+    { historyValue      :: Double
+    , historyDate       :: POSIXTime
+    , historyScoredUp   :: Maybe Int -- only exists for habits
     , historyScoredDown :: Maybe Int -- only exists for habits
     } deriving (Show, Eq, Ord)
 
@@ -97,13 +97,13 @@ instance ToJSON DailyFrequency where
     toJSON = Aeson.toJSON . fmap toLower . drop 1 . show
 
 data DailyRepeat = DailyRepeat
-    { repeatMonday :: Bool
-    , repeatTuesday :: Bool
+    { repeatMonday    :: Bool
+    , repeatTuesday   :: Bool
     , repeatWednesday :: Bool
-    , repeatThursday :: Bool
-    , repeatFriday :: Bool
-    , repeatSaturday :: Bool
-    , repeatSunday :: Bool
+    , repeatThursday  :: Bool
+    , repeatFriday    :: Bool
+    , repeatSaturday  :: Bool
+    , repeatSunday    :: Bool
     } deriving (Show, Eq, Ord)
 
 instance FromJSON DailyRepeat where
@@ -130,12 +130,12 @@ instance ToJSON DailyRepeat where
             ]
 
 data TaskHabit = TaskHabit
-    { habitUp :: Bool
-    , habitDown :: Bool
-    , habitCounterUp :: Int
+    { habitUp          :: Bool
+    , habitDown        :: Bool
+    , habitCounterUp   :: Int
     , habitCounterDown :: Int
-    , habitFrequency :: HabitFrequency
-    , habitHistory :: [TaskHistoryItem]
+    , habitFrequency   :: HabitFrequency
+    , habitHistory     :: [TaskHistoryItem]
     } deriving (Show, Eq, Ord)
 
 habitToPairs :: TaskHabit -> [Pair]
@@ -162,20 +162,20 @@ instance ToJSON TaskHabit where
     toJSON = Aeson.object . habitToPairs
 
 data TaskDaily = TaskDaily
-    { dailyCompleted :: Bool
+    { dailyCompleted         :: Bool
     , dailyCollapseChecklist :: Bool
-    , dailyChecklist :: [TaskChecklistItem]
-    , dailyFrequency :: DailyFrequency
-    , dailyEveryX :: Int
-    , dailyStartDate :: UTCTime
-    , dailyRepeat :: DailyRepeat
-    , dailyStreak :: Int
-    , dailyDaysOfMonth :: [Int]
-    , dailyWeeksOfMonth :: [Int]
-    , dailyIsDue :: Bool
-    , dailyNextDue :: [UTCTime]
-    , dailyYesterDaily :: Bool
-    , dailyHistory :: [TaskHistoryItem]
+    , dailyChecklist         :: [TaskChecklistItem]
+    , dailyFrequency         :: DailyFrequency
+    , dailyEveryX            :: Int
+    , dailyStartDate         :: UTCTime
+    , dailyRepeat            :: DailyRepeat
+    , dailyStreak            :: Int
+    , dailyDaysOfMonth       :: [Int]
+    , dailyWeeksOfMonth      :: [Int]
+    , dailyIsDue             :: Bool
+    , dailyNextDue           :: [UTCTime]
+    , dailyYesterDaily       :: Bool
+    , dailyHistory           :: [TaskHistoryItem]
     } deriving (Show, Eq, Ord)
 
 dailyToPairs :: TaskDaily -> [Pair]
@@ -219,11 +219,11 @@ instance ToJSON TaskDaily where
 
 
 data TaskTodo = TaskTodo
-    { todoCompleted :: Bool
+    { todoCompleted         :: Bool
     , todoCollapseChecklist :: Bool
-    , todoChecklist :: [TaskChecklistItem]
-    , todoDateCompleted :: Maybe UTCTime
-    , todoDate :: Maybe Text -- Should be date, but:
+    , todoChecklist         :: [TaskChecklistItem]
+    , todoDateCompleted     :: Maybe UTCTime
+    , todoDate              :: Maybe Text -- Should be date, but:
                              -- https://github.com/HabitRPG/habitica/blob/develop/website/server/models/task.js#L365
     } deriving (Show, Eq, Ord)
 
@@ -324,10 +324,10 @@ instance ToJSON BrokenChallengeType where
 
 data TaskChallenge = TaskChallenge
     { tcShortName :: Maybe Text
-    , tcId :: Maybe UUID
-    , tcTaskId :: Maybe UUID
-    , tcBroken :: Maybe BrokenChallengeType
-    , tcWinner :: Maybe Text
+    , tcId        :: Maybe UUID
+    , tcTaskId    :: Maybe UUID
+    , tcBroken    :: Maybe BrokenChallengeType
+    , tcWinner    :: Maybe Text
     } deriving (Show, Eq, Ord)
 
 instance FromJSON TaskChallenge where
@@ -369,11 +369,11 @@ instance ToJSON BrokenGroupType where
         GUnsubscribed -> "UNSUBSCRIBED"
 
 data TaskGroupApproval = TaskGroupApproval
-    { tgaRequired :: Bool
-    , tgaApproved :: Bool
-    , tgaDateApproved :: Maybe UTCTime
+    { tgaRequired      :: Bool
+    , tgaApproved      :: Bool
+    , tgaDateApproved  :: Maybe UTCTime
     , tgaApprovingUser :: Maybe UUID
-    , tgaRequested :: Bool
+    , tgaRequested     :: Bool
     , tgaRequestedDate :: Maybe UTCTime
     } deriving (Show, Eq, Ord)
 
@@ -399,12 +399,12 @@ instance ToJSON TaskGroupApproval where
             ]
 
 data TaskGroup = TaskGroup
-    { tgId :: Maybe UUID
-    , tgBroken :: Maybe BrokenGroupType
-    , tgAssignedUsers :: [UUID]
-    , tgAssignedDate :: Maybe UTCTime
-    , tgTaskId :: Maybe UUID
-    , tgApproval :: TaskGroupApproval
+    { tgId               :: Maybe UUID
+    , tgBroken           :: Maybe BrokenGroupType
+    , tgAssignedUsers    :: [UUID]
+    , tgAssignedDate     :: Maybe UTCTime
+    , tgTaskId           :: Maybe UUID
+    , tgApproval         :: TaskGroupApproval
     , tgSharedCompletion :: Text
     } deriving (Show, Eq, Ord)
 
@@ -432,9 +432,9 @@ instance ToJSON TaskGroup where
             ]
 
 data Reminder = Reminder
-    { reminderId :: UUID
+    { reminderId        :: UUID
     , reminderStartDate :: Maybe UTCTime
-    , reminderTime :: UTCTime
+    , reminderTime      :: UTCTime
     } deriving (Show, Eq, Ord)
 
 instance FromJSON Reminder where
@@ -463,22 +463,22 @@ data TaskType
   deriving (Show, Eq, Ord)
 
 data Task = Task
-    { taskId :: UUID -- Needs to be encoded to both _id and id
-    , taskType :: TaskType
-    , taskText :: Text
-    , taskNotes :: Text
-    , taskAlias :: Maybe Text
-    , taskTags :: [UUID]
-    , taskValue :: Double
-    , taskPriority :: Priority
-    , taskAttribute :: Attribute
-    , taskUserId :: Maybe UUID -- When not set, it belongs to a challenge
-    , taskChallenge :: TaskChallenge
-    , taskGroup :: TaskGroup
-    , taskReminders :: [Reminder]
+    { taskId         :: UUID -- Needs to be encoded to both _id and id
+    , taskType       :: TaskType
+    , taskText       :: Text
+    , taskNotes      :: Text
+    , taskAlias      :: Maybe Text
+    , taskTags       :: [UUID]
+    , taskValue      :: Double
+    , taskPriority   :: Priority
+    , taskAttribute  :: Attribute
+    , taskUserId     :: Maybe UUID -- When not set, it belongs to a challenge
+    , taskChallenge  :: TaskChallenge
+    , taskGroup      :: TaskGroup
+    , taskReminders  :: [Reminder]
     , taskByHabitica :: Bool
-    , taskCreatedAt :: UTCTime
-    , taskUpdatedAt :: UTCTime
+    , taskCreatedAt  :: UTCTime
+    , taskUpdatedAt  :: UTCTime
     } deriving (Show, Eq, Ord)
 
 instance FromJSON Task where
@@ -514,8 +514,8 @@ instance ToJSON Task where
                 case taskType of
                     Habit habit -> habitToPairs habit
                     Daily daily -> dailyToPairs daily
-                    Todo todo -> todoToPairs todo
-                    Reward -> []
+                    Todo todo   -> todoToPairs todo
+                    Reward      -> []
         in
         Aeson.object $
             [ "_id" .= taskId
@@ -524,8 +524,8 @@ instance ToJSON Task where
                 case taskType of
                   Habit _ -> "habit" :: Text
                   Daily _ -> "daily"
-                  Todo _ -> "todo"
-                  Reward -> "reward"
+                  Todo _  -> "todo"
+                  Reward  -> "reward"
             , "text" .= taskText
             , "notes" .= taskNotes
             , "alias" .= taskAlias

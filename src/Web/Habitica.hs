@@ -1,3 +1,9 @@
-module Web.Habitica where
+module Web.Habitica
+    ( module Web.Habitica.Types
+    , module Web.Habitica.Request
+    , module Web.Habitica.Api
+    ) where
 
-placeholder = 1
+import           Web.Habitica.Api
+import           Web.Habitica.Request
+import           Web.Habitica.Types

@@ -19,6 +19,8 @@ build-type:          Simple
 extra-source-files:  CHANGELOG.md
 
 library
+  default-extensions:  OverloadedStrings
+                     , LambdaCase
   ghc-options:         -Wall
                        -fwarn-incomplete-uni-patterns
                        -fwarn-tabs
@@ -31,6 +33,7 @@ library
                        -Wwarn=unused-matches
                        -Wwarn=unused-do-bind
   exposed-modules:     Web.Habitica
+                     , Web.Habitica.Api
                      , Web.Habitica.Request
                      , Web.Habitica.Types
   -- other-modules:
@@ -38,6 +41,8 @@ library
   build-depends:       aeson
                      , base >=4.12 && <4.13
                      , req
+                     , http-client
+                     , mtl
                      , text
                      , time
                      , uuid

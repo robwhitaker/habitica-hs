@@ -7,6 +7,7 @@ import           Data.Text             (Text)
 import           Data.Time             (UTCTime)
 import           Data.Time.Clock.POSIX (POSIXTime)
 import           Data.UUID             (UUID)
+import           Data.Void             (Void)
 
 import           Data.Aeson            (FromJSON, ToJSON, (.:), (.:?), (.=))
 import qualified Data.Aeson            as Aeson
@@ -720,3 +721,15 @@ instance FromJSON TaskScoredMsgUser where
             <$> o .: "stats"
             <*> o .: "_id"
             -- TODO: _tmp field
+
+type EmptyObject = Maybe Void
+
+-- PLACEHOLDERS
+
+data DecoderNotImplemented a =
+    DecoderNotImplemented
+
+instance FromJSON (DecoderNotImplemented a) where
+    parseJSON _ = return DecoderNotImplemented
+
+data User

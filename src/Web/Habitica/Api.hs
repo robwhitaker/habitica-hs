@@ -6,7 +6,8 @@ import           Data.UUID            (UUID)
 import qualified Data.UUID            as UUID
 
 import           Network.HTTP.Req     (GET (..), MonadHttp, NoReqBody (..),
-                                       PUT (..), ReqBodyJson (..), (=:))
+                                       POST (..), PUT (..), ReqBodyJson (..),
+                                       (=:))
 
 import           Web.Habitica.Request
 import           Web.Habitica.Types
@@ -45,3 +46,19 @@ updateTask :: (MonadHttp m, HabiticaApi m, ToJSON taskChanges) => UUID -> taskCh
 updateTask tId taskUpdates = do
     headers <- getAuthHeaders
     habiticaRequest PUT ["tasks", UUID.toText tId] (ReqBodyJson taskUpdates) headers mempty
+
+-- TODO: this should return the updated user object, but we don't have decoders for that yet
+updateUser
+    :: ( MonadHttp m
+       , HabiticaApi m
+       , ToJSON userChanges
+       )
+    => userChanges -> m (HabiticaJsonResponse (DecoderNotImplemented User))
+updateUser userChanges = do
+    headers <- getAuthHeaders
+    habiticaRequest PUT ["user"] (ReqBodyJson userChanges) headers mempty
+
+runCron :: (MonadHttp m, HabiticaApi m) => m (HabiticaJsonResponse EmptyObject)
+runCron = do
+    headers <- getAuthHeaders
+    habiticaRequest POST ["cron"] NoReqBody headers mempty

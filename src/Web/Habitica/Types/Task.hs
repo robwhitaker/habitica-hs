@@ -12,6 +12,17 @@ import           Data.Aeson            (FromJSON, ToJSON, (.:), (.:?), (.=))
 import qualified Data.Aeson            as Aeson
 import           Data.Aeson.Types      (Pair)
 
+data ScoreDirection
+    = ScoreUp
+    | ScoreDown
+  deriving (Show, Eq, Ord)
+
+instance FromJSON ScoreDirection where
+    parseJSON = Aeson.withText "ScoreDirection" $ \case
+        "up" -> return ScoreUp
+        "down" -> return ScoreDown
+        _ -> fail "ScoreDirection must be one of: up or down"
+
 data TaskChecklistItem = TaskChecklistItem
     { ciCompleted :: Bool
     , ciText      :: Text

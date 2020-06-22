@@ -47,13 +47,13 @@ updateTask tId taskUpdates = do
     headers <- getAuthHeaders
     habiticaRequest PUT ["tasks", UUID.toText tId] (ReqBodyJson taskUpdates) headers mempty
 
--- TODO: this should return the updated user object, but we don't have decoders for that yet
+-- TODO: this should return the updated user object, but we don't have full decoders for that yet
 updateUser
     :: ( MonadHttp m
        , HabiticaApi m
        , ToJSON userChanges
        )
-    => userChanges -> m (HabiticaJsonResponse (DecoderNotImplemented User))
+    => userChanges -> m (HabiticaJsonResponse (PartialDecoder User))
 updateUser userChanges = do
     headers <- getAuthHeaders
     habiticaRequest PUT ["user"] (ReqBodyJson userChanges) headers mempty

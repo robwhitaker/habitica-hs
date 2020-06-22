@@ -1,30 +1,80 @@
+{-# LANGUAGE RecordWildCards #-}
+
 module Web.Habitica.Types.User where
 
-import           Data.Text               (Text)
-import           Data.UUID               (UUID)
+import           Data.Text                  (Text)
+import           Data.Time                  (UTCTime)
 
-import           Data.Aeson              (FromJSON, (.:))
-import qualified Data.Aeson              as Aeson
+import           Data.Aeson                 (FromJSON, (.:), (.:?))
+import qualified Data.Aeson                 as Aeson
 
-import           Web.Habitica.Types.Task
+import           Web.Habitica.Types.Helpers
 
 -- TODO: fill in this placeholder
 data User = User
+    { userAuth  :: Maybe Auth
+    , userStats :: Maybe Stats
+    } deriving (Show, Eq, Ord)
 
-data Class
-    = Warrior
-    | Rogue
-    | Wizard
-    | Healer
+instance FromJSON User where
+    parseJSON = Aeson.withObject "User" $ \o -> do
+        userAuth <- o .:? "auth"
+        userStats <- o .:? "stats"
+        return $ User {..}
+
+-- AUTH FIELD --
+
+data Auth = Auth
+    { authBlocked    :: Maybe Bool
+    , authLocal      :: AuthLocal
+    , authTimestamps :: AuthTimestamps
+    , authFacebook   :: DecoderNotImplemented AuthSocial
+    , authGoogle     :: DecoderNotImplemented AuthSocial
+    , authApple      :: DecoderNotImplemented AuthSocial
+    } deriving (Show, Eq, Ord)
+
+instance FromJSON Auth where
+    parseJSON = Aeson.withObject "Auth" $ \o ->
+        Auth
+            <$> o .:? "blocked"
+            <*> o .: "local"
+            <*> o .: "timestamps"
+            <*> o .: "facebook"
+            <*> o .: "google"
+            <*> o .: "apple"
+
+data AuthLocal = AuthLocal
+    { localEmail             :: Maybe Text -- TODO: maybe format as actual Email type?
+    , localUsername          :: Text
+    , localLowerCaseUsername :: Text
+    } deriving (Show, Eq, Ord)
+
+instance FromJSON AuthLocal where
+    parseJSON = Aeson.withObject "AuthLocal" $ \o ->
+        AuthLocal
+            <$> o .:? "email"
+            <*> o .: "username"
+            <*> o .: "lowerCaseUsername"
+
+data AuthTimestamps = AuthTimestamps
+    { atsCreated  :: UTCTime
+    , atsLoggedIn :: UTCTime
+    , atsUpdated  :: UTCTime
+    } deriving (Show, Eq, Ord)
+
+instance FromJSON AuthTimestamps where
+    parseJSON = Aeson.withObject "AuthTimestamps" $ \o ->
+        AuthTimestamps
+            <$> o .: "created"
+            <*> o .: "loggedin"
+            <*> o .: "updated"
+
+-- TODO: What is the shape of this thing?
+data AuthSocial = AuthSocial
   deriving (Show, Eq, Ord)
 
-instance FromJSON Class where
-    parseJSON = Aeson.withText "Class" $ \case
-        "warrior" -> return Warrior
-        "rogue" -> return Rogue
-        "wizard" -> return Wizard
-        "healer" -> return Healer
-        _ -> fail "Class must be one of: warrior, rogue, wizard, or healer"
+
+-- STATS FIELD --
 
 data Buffs = Buffs
     { buffsStr            :: Int
@@ -112,78 +162,19 @@ instance FromJSON Stats where
             <*> o .: "maxHealth"
             <*> o .: "maxMP"
 
--- WEBHOOK MESSAGES --
+-- Class --
 
-data ScoreDirection
-    = ScoreUp
-    | ScoreDown
+data Class
+    = Warrior
+    | Rogue
+    | Wizard
+    | Healer
   deriving (Show, Eq, Ord)
 
-instance FromJSON ScoreDirection where
-    parseJSON = Aeson.withText "ScoreDirection" $ \case
-        "up" -> return ScoreUp
-        "down" -> return ScoreDown
-        _ -> fail "ScoreDirection must be one of: up or down"
-
-{- HLINT ignore WebhookMessage -}
-data WebhookMessage
-    = TaskActivity TaskActivity
--- TODO:    | UserActivity
--- TODO:    | QuestActivity
--- TODO:    | GroupChatReceived
-  deriving (Show, Eq, Ord)
-
-instance FromJSON WebhookMessage where
-    parseJSON = Aeson.withObject "WebhookMessage" $ \o -> do
-        webhookType <- o .: "webhookType"
-        case webhookType :: Text of
-            "taskActivity" -> TaskActivity <$> Aeson.parseJSON (Aeson.Object o)
-            -- TODO: implement other decoders
-            _ -> fail "decoder not implemented"
-
-{- HLINT ignore TaskActivity -}
-data TaskActivity
-    = TAScored TaskScoredMsg
--- TODO:    | TACreated TaskActivityMsg
--- TODO:    | TAUpdated TaskActivityMsg
--- TODO:    | TADeleted TaskActivityMsg
--- TODO:    | TAChecklistScored TaskChecklistScoredMsg
-  deriving (Show, Eq, Ord)
-
-instance FromJSON TaskActivity where
-    parseJSON = Aeson.withObject "TaskActivity" $ \o -> do
-        activityType <- o .: "type"
-        case activityType :: Text of
-            "scored" -> TAScored <$> Aeson.parseJSON (Aeson.Object o)
-            -- TODO: implement other decoders
-            _        -> fail "decoder not implemented"
-
-data TaskScoredMsg = TaskScoredMsg
-    { tsDirection :: ScoreDirection
-    , tsDelta     :: Double
-    , tsTask      :: Task
-    , tsUser      :: TaskScoredMsgUser
-    } deriving (Show, Eq, Ord)
-
-instance FromJSON TaskScoredMsg where
-    parseJSON = Aeson.withObject "TaskScoredMsg" $ \o ->
-        TaskScoredMsg
-            <$> o .: "direction"
-            <*> o .: "delta"
-            <*> o .: "task"
-            <*> o .: "user"
-
-data TaskScoredMsgUser = TaskScoredMsgUser
-    { tsuStats :: Stats
-    , tsuId    :: UUID
-    -- TODO: _tmp field - specified drops, damage, etc. for task completion
-    --       but haven't been able to find out the actual shape of these fields
-    --       or what is/isn't a Maybe type. They might all be Maybes.
-    } deriving (Show, Eq, Ord)
-
-instance FromJSON TaskScoredMsgUser where
-    parseJSON = Aeson.withObject "TaskScoredMsgUser" $ \o ->
-        TaskScoredMsgUser
-            <$> o .: "stats"
-            <*> o .: "_id"
-            -- TODO: _tmp field
+instance FromJSON Class where
+    parseJSON = Aeson.withText "Class" $ \case
+        "warrior" -> return Warrior
+        "rogue" -> return Rogue
+        "wizard" -> return Wizard
+        "healer" -> return Healer
+        _ -> fail "Class must be one of: warrior, rogue, wizard, or healer"

@@ -36,8 +36,11 @@ library
                      , Web.Habitica.Api
                      , Web.Habitica.Request
                      , Web.Habitica.Types
-  other-modules:       Web.Habitica.Types.Task
+                     , Web.Habitica.Types.Task
                      , Web.Habitica.Types.User
+                     , Web.Habitica.Types.WebhookMessage
+                     , Web.Habitica.Types.Helpers
+  -- other-modules:
   -- other-extensions:
   build-depends:       aeson
                      , base >=4.12 && <4.13

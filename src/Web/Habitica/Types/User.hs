@@ -12,13 +12,15 @@ import           Web.Habitica.Types.Helpers
 
 -- TODO: fill in this placeholder
 data User = User
-    { userAuth  :: Maybe Auth
-    , userStats :: Maybe Stats
+    { userAuth    :: Maybe Auth
+    , userProfile :: Maybe Profile
+    , userStats   :: Maybe Stats
     } deriving (Show, Eq, Ord)
 
 instance FromJSON User where
     parseJSON = Aeson.withObject "User" $ \o -> do
         userAuth <- o .:? "auth"
+        userProfile <- o .:? "profile"
         userStats <- o .:? "stats"
         return $ User {..}
 
@@ -73,6 +75,20 @@ instance FromJSON AuthTimestamps where
 data AuthSocial = AuthSocial
   deriving (Show, Eq, Ord)
 
+-- PROFILE FIELD --
+
+data Profile = Profile
+    { profileBlurb    :: Maybe Text
+    , profileImageUrl :: Maybe Text
+    , profileName     :: Text
+    } deriving (Show, Eq, Ord)
+
+instance FromJSON Profile where
+    parseJSON = Aeson.withObject "Profile" $ \o ->
+        Profile
+            <$> o .:? "blurb"
+            <*> o .:? "imageUrl"
+            <*> o .: "name"
 
 -- STATS FIELD --
 

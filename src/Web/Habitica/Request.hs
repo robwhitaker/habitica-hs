@@ -4,7 +4,7 @@
 module Web.Habitica.Request
     ( HabiticaAuthHeaders
     , XClient
-    , HabiticaResponse (..)
+    , HabiticaResponse
     , xClient
     , habiticaHeaders
     , defaultHabiticaHttpConfig
@@ -12,8 +12,13 @@ module Web.Habitica.Request
     , habiticaRequest
     , HabiticaRequest
     , runHabiticaRequest
-    , HabiticaJsonResponse
     , HabiticaApi (..)
+    , HabiticaError (..)
+    , responseBody
+    , responseStatusCode
+    , responseStatusMessage
+    , responseHeader
+    , responseCookieJar
     ) where
 
 import qualified Control.Exception      as Exception
@@ -23,6 +28,7 @@ import           Control.Monad.Trans    (lift)
 
 import           Data.Aeson             (FromJSON, (.:))
 import qualified Data.Aeson             as Aeson
+import           Data.ByteString        (ByteString)
 import           Data.Text              (Text)
 import qualified Data.Text.Encoding     as T (encodeUtf8)
 import           Data.UUID              (UUID)
@@ -52,20 +58,30 @@ habiticaHeaders userId apiKey (XClient (maintainerId, appName)) =
   where
     clientString = UUID.toASCIIBytes maintainerId <> "-" <> T.encodeUtf8 appName
 
-data HabiticaResponse a
-    = DataResponse a
-    | ErrorResponse
-        { errorKey     :: Text
-        , errorMessage :: Text
-        }
+data HabiticaError = HabiticaError
+    { errorKey     :: Text
+    , errorMessage :: Text
+    } deriving (Show, Eq, Ord)
+
+instance FromJSON HabiticaError where
+    parseJSON = Aeson.withObject "HabiticaError" $ \o ->
+        HabiticaError
+            <$> o .: "error"
+            <*> o .: "message"
+
+newtype HabiticaResBody a =
+    HabiticaResBody { unHabiticaResBody :: Either HabiticaError a }
   deriving (Show, Eq, Ord)
 
-instance FromJSON a => FromJSON (HabiticaResponse a) where
-    parseJSON = Aeson.withObject "HabiticaResponse" $ \o -> do
+instance FromJSON a => FromJSON (HabiticaResBody a) where
+    parseJSON = Aeson.withObject "HabiticaResBody" $ \o -> do
         success <- o .: "success"
-        if success
-        then DataResponse <$> o .: "data"
-        else ErrorResponse <$> o .: "error" <*> o .: "message"
+        HabiticaResBody <$>
+            if success
+            then Right <$> o .: "data"
+            else Left <$> Aeson.parseJSON (Aeson.Object o)
+
+type HabiticaResponse a = Req.JsonResponse (HabiticaResBody a)
 
 defaultHabiticaHttpConfig :: Req.HttpConfig
 defaultHabiticaHttpConfig =
@@ -91,8 +107,6 @@ hideAPIKeyInExceptions = \case
 
     otherException -> otherException
 
-type HabiticaJsonResponse a = Req.JsonResponse (HabiticaResponse a)
-
 habiticaRequest
     :: ( FromJSON a
        , Req.MonadHttp m
@@ -105,12 +119,32 @@ habiticaRequest
     -> body
     -> HabiticaAuthHeaders
     -> Req.Option 'Req.Https
-    -> m (HabiticaJsonResponse a)
+    -> m (HabiticaResponse a)
 habiticaRequest method endpoint body (HabiticaAuthHeaders headers) opts =
     Req.req method url body Req.jsonResponse (headers <> opts)
   where
     apiBaseUrl = Req.https "habitica.com" /: "api" /: "v4"
     url = foldl (/:) apiBaseUrl endpoint
+
+responseBody :: FromJSON a => HabiticaResponse a -> Either HabiticaError a
+responseBody =
+    unHabiticaResBody . Req.responseBody
+
+responseStatusCode :: FromJSON a => HabiticaResponse a -> Int
+responseStatusCode =
+    Req.responseStatusCode
+
+responseStatusMessage :: FromJSON a => HabiticaResponse a -> ByteString
+responseStatusMessage =
+    Req.responseStatusMessage
+
+responseHeader :: FromJSON a => HabiticaResponse a -> ByteString -> Maybe ByteString
+responseHeader =
+    Req.responseHeader
+
+responseCookieJar :: FromJSON a => HabiticaResponse a -> HttpClient.CookieJar
+responseCookieJar =
+    Req.responseCookieJar
 
 newtype HabiticaRequest a = HabiticaRequest (ReaderT (Req.HttpConfig, HabiticaAuthHeaders) IO a)
   deriving (Functor, Applicative, Monad, MonadIO)

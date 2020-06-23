@@ -20,7 +20,7 @@ data TaskTypeFilter
     | OnlyCompletedTodos
   deriving (Show, Eq, Ord)
 
-getTask :: (MonadHttp m, HabiticaApi m) => UUID -> m (HabiticaJsonResponse Task)
+getTask :: (MonadHttp m, HabiticaApi m) => UUID -> m (HabiticaResponse Task)
 getTask tId = do
     headers <- getAuthHeaders
     habiticaRequest GET ["tasks", UUID.toText tId] NoReqBody headers mempty
@@ -29,7 +29,7 @@ getTask tId = do
 getUserTasks
     :: (MonadHttp m, HabiticaApi m)
     => Maybe TaskTypeFilter
-    -> m (HabiticaJsonResponse [Task])
+    -> m (HabiticaResponse [Task])
 getUserTasks mbTypeFilter = do
     headers <- getAuthHeaders
     habiticaRequest GET ["tasks", "user"] NoReqBody headers typeFilter
@@ -42,23 +42,32 @@ getUserTasks mbTypeFilter = do
         OnlyCompletedTodos -> "completedTodos"
     typeFilter = maybe mempty (("type" =:) . filterToText) mbTypeFilter
 
-updateTask :: (MonadHttp m, HabiticaApi m, ToJSON taskChanges) => UUID -> taskChanges -> m (HabiticaJsonResponse Task)
+updateTask :: (MonadHttp m, HabiticaApi m, ToJSON taskChanges) => UUID -> taskChanges -> m (HabiticaResponse Task)
 updateTask tId taskUpdates = do
     headers <- getAuthHeaders
     habiticaRequest PUT ["tasks", UUID.toText tId] (ReqBodyJson taskUpdates) headers mempty
 
--- TODO: this should return the updated user object, but we don't have full decoders for that yet
+-- TODO: Add list of fields as an argument
+getUser
+    :: ( MonadHttp m
+       , HabiticaApi m
+       )
+    => m (HabiticaResponse (PartialDecoder User))
+getUser = do
+    headers <- getAuthHeaders
+    habiticaRequest GET ["user"] NoReqBody headers mempty
+
 updateUser
     :: ( MonadHttp m
        , HabiticaApi m
        , ToJSON userChanges
        )
-    => userChanges -> m (HabiticaJsonResponse (PartialDecoder User))
+    => userChanges -> m (HabiticaResponse (PartialDecoder User))
 updateUser userChanges = do
     headers <- getAuthHeaders
     habiticaRequest PUT ["user"] (ReqBodyJson userChanges) headers mempty
 
-runCron :: (MonadHttp m, HabiticaApi m) => m (HabiticaJsonResponse EmptyObject)
+runCron :: (MonadHttp m, HabiticaApi m) => m (HabiticaResponse EmptyObject)
 runCron = do
     headers <- getAuthHeaders
     habiticaRequest POST ["cron"] NoReqBody headers mempty

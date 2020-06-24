@@ -149,12 +149,9 @@ data Stats = Stats
     , statsPer         :: Int
     , statsBuffs       :: Buffs
     , statsTraining    :: Training
-    -- TODO: these last three might not always be defined as they are added by
-    --       a function call and not part of the Stats schema, but I have yet
-    --       to find a case when they're not. Might need to be fixed later.
-    , statsToNextLevel :: Int
-    , statsMaxHealth   :: Int
-    , statsMaxMP       :: Int
+    , statsToNextLevel :: Maybe Int
+    , statsMaxHealth   :: Maybe Int
+    , statsMaxMP       :: Maybe Int
     } deriving (Show, Eq, Ord)
 
 
@@ -174,9 +171,9 @@ instance FromJSON Stats where
             <*> o .: "per"
             <*> o .: "buffs"
             <*> o .: "training"
-            <*> o .: "toNextLevel"
-            <*> o .: "maxHealth"
-            <*> o .: "maxMP"
+            <*> o .:? "toNextLevel"
+            <*> o .:? "maxHealth"
+            <*> o .:? "maxMP"
 
 -- Class --
 

@@ -1,11 +1,7 @@
 let
   pkgs = import (fetchTarball {
-    url = https://github.com/NixOS/nixpkgs/archive/20.03.tar.gz;
-    sha256 = "0182ys095dfx02vl2a20j1hz92dx3mfgz2a6fhn31bqlp1wa8hlq";
-  }) {};
-  oldPkgs = import (fetchTarball {
-    url = https://github.com/NixOS/nixpkgs/archive/19.09.tar.gz;
-    sha256 = "0mhqhq21y5vrr1f30qd2bvydv4bbbslvyzclhw0kdxmkgg3z4c92";
+    url = https://github.com/NixOS/nixpkgs/archive/a5e211dd7f95167ab42066e82bfaa5a65971e67c.tar.gz;
+    sha256 = "0f9279l5if8jc8gnyyb722sqssa5h0dszm3fhmj0ndg9d071wl8g";
   }) {};
   drv = import ./. { inherit pkgs; };
 in
@@ -15,6 +11,6 @@ in
       cabal-install
       ghcid
       hlint
-      oldPkgs.stylish-haskell # stylish-haskell is marked "broken" in newer versions of nixpkgs
+      stylish-haskell
     ];
   }

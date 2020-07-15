@@ -2,8 +2,10 @@
 
 module Web.Habitica.Types.User where
 
+import           Data.Map.Strict            (Map)
 import           Data.Text                  (Text)
 import           Data.Time                  (UTCTime)
+import           Data.UUID                  (UUID)
 
 import           Data.Aeson                 (FromJSON, (.:), (.:?))
 import qualified Data.Aeson                 as Aeson
@@ -13,6 +15,7 @@ import           Web.Habitica.Types.Helpers
 -- TODO: fill in this placeholder
 data User = User
     { userAuth    :: Maybe Auth
+    , userParty   :: Maybe Party
     , userProfile :: Maybe Profile
     , userStats   :: Maybe Stats
     } deriving (Show, Eq, Ord)
@@ -20,6 +23,7 @@ data User = User
 instance FromJSON User where
     parseJSON = Aeson.withObject "User" $ \o -> do
         userAuth <- o .:? "auth"
+        userParty <- o .:? "party"
         userProfile <- o .:? "profile"
         userStats <- o .:? "stats"
         return $ User {..}
@@ -191,3 +195,55 @@ instance FromJSON Class where
         "wizard" -> return Wizard
         "healer" -> return Healer
         _ -> fail "Class must be one of: warrior, rogue, wizard, or healer"
+
+-- PARTY FIELD --
+
+data Party = Party
+    { partyId             :: Maybe UUID -- Nothing if the user is not in a party
+    , partyOrder          :: Text
+    , partyOrderAscending :: Text
+    , partyQuest          :: Quest
+    } deriving (Show, Eq, Ord)
+
+instance FromJSON Party where
+    parseJSON = Aeson.withObject "Party" $ \o -> do
+        partyId <- o .:? "_id"
+        partyOrder <- o .: "order"
+        partyOrderAscending <- o .: "orderAscending"
+        partyQuest <- o .: "quest"
+        return Party {..}
+
+data Quest = Quest
+    { questKey        :: Maybe Text -- Nothing if there is no current quest/quest invite
+    , questProgress   :: QuestProgress
+    , questCompleted  :: Maybe Text
+        -- ^ From the Habitica source code:
+        --     When quest is done, we move it from key => completed,
+        --     and it's a one-time flag (for modal) that they unset by clicking "ok" in browser
+    , questRsvpNeeded :: Bool
+    } deriving (Show, Eq, Ord)
+
+instance FromJSON Quest where
+    parseJSON = Aeson.withObject "Quest" $ \o -> do
+        questKey <- o .:? "key"
+        questProgress <- o .: "progress"
+        questCompleted <- o .:? "completed"
+        questRsvpNeeded <- o .: "RSVPNeeded"
+        return Quest {..}
+
+data QuestProgress = QuestProgress
+    { qpUp             :: Double -- Damage to boss
+    , qpDown           :: Double -- No idea, maybe rage bar??
+    , qpCollect        :: Maybe (Map Text Double) -- I think this is a map from collectible name to number
+                                                  -- collected for a quest, but not sure
+                                                  -- TODO: this maybe should be Int instead of Double?
+    , qpCollectedItems :: Int -- TODO: best I can tell, this is always an Int but not 100% sure
+    } deriving (Show, Eq, Ord)
+
+instance FromJSON QuestProgress where
+    parseJSON = Aeson.withObject "QuestProgress" $ \o -> do
+        qpUp <- o .: "up"
+        qpDown <- o .: "down"
+        qpCollect <- o .:? "collect"
+        qpCollectedItems <- o .: "collectedItems"
+        return QuestProgress {..}

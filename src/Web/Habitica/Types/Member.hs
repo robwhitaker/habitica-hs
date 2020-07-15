@@ -2,20 +2,24 @@
 
 module Web.Habitica.Types.Member where
 
-import           Data.Text  (Text)
-import           Data.Time  (UTCTime)
+import           Data.Text               (Text)
+import           Data.Time               (UTCTime)
 
-import           Data.Aeson (FromJSON, (.:))
-import qualified Data.Aeson as Aeson
+import           Data.Aeson              (FromJSON, (.:))
+import qualified Data.Aeson              as Aeson
+
+import           Web.Habitica.Types.User (Party)
 
 -- TODO: rest of the fields
 data Member = Member
-    { memberAuth :: PublicAuth
+    { memberAuth  :: PublicAuth
+    , memberParty :: Party
     } deriving (Show, Eq, Ord)
 
 instance FromJSON Member where
     parseJSON = Aeson.withObject "Member" $ \o -> do
         memberAuth <- o .: "auth"
+        memberParty <- o .: "party"
         return $ Member {..}
 
 -- MEMBER AUTH FIELD --

@@ -71,3 +71,8 @@ runCron :: (MonadHttp m, HabiticaApi m) => m (HabiticaResponse EmptyObject)
 runCron = do
     headers <- getAuthHeaders
     habiticaRequest POST ["cron"] NoReqBody headers mempty
+
+getMemberProfile :: (MonadHttp m, HabiticaApi m) => UUID -> m (HabiticaResponse (PartialDecoder Member))
+getMemberProfile uuid = do
+    headers <- getAuthHeaders
+    habiticaRequest GET ["members", UUID.toText uuid] NoReqBody headers mempty

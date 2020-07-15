@@ -45,6 +45,7 @@ library
   -- other-extensions:
   build-depends:       aeson
                      , base
+                     , containers
                      , req
                      , http-client
                      , mtl

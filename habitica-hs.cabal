@@ -38,6 +38,7 @@ library
                      , Web.Habitica.Types
                      , Web.Habitica.Types.Task
                      , Web.Habitica.Types.User
+                     , Web.Habitica.Types.Member
                      , Web.Habitica.Types.WebhookMessage
                      , Web.Habitica.Types.Helpers
   -- other-modules:

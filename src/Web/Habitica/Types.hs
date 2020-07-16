@@ -4,8 +4,10 @@ module Web.Habitica.Types
     , module Web.Habitica.Types.WebhookMessage
     , module Web.Habitica.Types.Helpers
     , module Web.Habitica.Types.Member
+    , module Web.Habitica.Types.Group
     ) where
 
+import           Web.Habitica.Types.Group
 import           Web.Habitica.Types.Helpers
 import           Web.Habitica.Types.Member
 import           Web.Habitica.Types.Task

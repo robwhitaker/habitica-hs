@@ -107,8 +107,8 @@ instance FromJSON UserMessageSender where
             <*> o .: "userStyles"
 
 data MessageGroup = MessageGroup
-    { groupId   :: UUID
-    , groupName :: Text
+    { mgId   :: UUID
+    , mgName :: Text
     } deriving (Show, Eq, Ord)
 
 instance FromJSON MessageGroup where

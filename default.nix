@@ -1,11 +1,22 @@
-{ compiler ? null
-, pkgs ? import <nixpkgs> {}
-}:
-
+{ pkgs ? import ./nix/working-packages.nix }:
 let
-  haskellPackages =
-    if builtins.isNull compiler
-      then pkgs.haskellPackages
-      else pkgs.haskell.packages.${compiler};
+  sources = import ./nix/sources.nix;
+  nivPackages = import sources.niv {};
+
+  habitica-hs = pkgs.haskellPackages.callCabal2nix "habitica-hs" ./. {};
 in
-  haskellPackages.callCabal2nix "habitica-hs" ./. {}
+{
+  drv = habitica-hs;
+  shell = pkgs.haskellPackages.shellFor {
+    packages = _: [habitica-hs];
+    buildInputs = with pkgs.haskellPackages; [
+      cabal-install
+      ghcid
+      hlint
+      stylish-haskell
+
+      nivPackages.niv
+    ];
+    withHoogle = true;
+  };
+}

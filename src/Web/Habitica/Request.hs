@@ -123,7 +123,7 @@ habiticaRequest
 habiticaRequest method endpoint body (HabiticaAuthHeaders headers) opts =
     Req.req method url body Req.jsonResponse (headers <> opts)
   where
-    apiBaseUrl = Req.https "habitica.com" /: "api" /: "v4"
+    apiBaseUrl = Req.https "habitica.com" /: "api" /: "v3"
     url = foldl (/:) apiBaseUrl endpoint
 
 responseBody :: FromJSON a => HabiticaResponse a -> Either HabiticaError a

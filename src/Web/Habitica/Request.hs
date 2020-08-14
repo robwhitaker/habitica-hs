@@ -1,5 +1,6 @@
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE RecordWildCards            #-}
 
 module Web.Habitica.Request
     ( HabiticaAuthHeaders
@@ -19,6 +20,7 @@ module Web.Habitica.Request
     , responseStatusMessage
     , responseHeader
     , responseCookieJar
+    , responseRateLimit
     ) where
 
 import qualified Control.Exception      as Exception
@@ -30,9 +32,15 @@ import           Data.Aeson             (FromJSON, (.:))
 import qualified Data.Aeson             as Aeson
 import           Data.ByteString        (ByteString)
 import           Data.Text              (Text)
-import qualified Data.Text.Encoding     as T (encodeUtf8)
+import qualified Data.Text              as T
+import qualified Data.Text.Encoding     as T (decodeUtf8, encodeUtf8)
+import           Data.Time              (NominalDiffTime, UTCTime)
+import qualified Data.Time              as Time
+import qualified Data.Time.Format       as TimeFmt
 import           Data.UUID              (UUID)
 import qualified Data.UUID              as UUID
+
+import           Text.Read              (readMaybe)
 
 import qualified Network.HTTP.Client    as HttpClient
 import           Network.HTTP.Req       ((/:))
@@ -57,6 +65,13 @@ habiticaHeaders userId apiKey (XClient (maintainerId, appName)) =
         ]
   where
     clientString = UUID.toASCIIBytes maintainerId <> "-" <> T.encodeUtf8 appName
+
+data HabiticaRateLimit = HabiticaRateLimit
+    { rateLimitLimit      :: Int
+    , rateLimitRemaining  :: Int
+    , rateLimitReset      :: UTCTime
+    , rateLimitRetryAfter :: Maybe NominalDiffTime
+    } deriving (Show, Eq, Ord)
 
 data HabiticaError = HabiticaError
     { errorKey     :: Text
@@ -145,6 +160,24 @@ responseHeader =
 responseCookieJar :: FromJSON a => HabiticaResponse a -> HttpClient.CookieJar
 responseCookieJar =
     Req.responseCookieJar
+
+responseRateLimit :: FromJSON a => HabiticaResponse a -> Maybe HabiticaRateLimit
+responseRateLimit res = do
+    rateLimitLimit <- responseHeader res "X-RateLimit-Limit" >>= readBS
+    rateLimitRemaining <- responseHeader res "X-RateLimit-Remaining" >>= readBS
+    rateLimitReset <-
+        responseHeader res "X-RateLimit-Reset" >>=
+            -- Habitica sends this in the format output my JavaScript's
+            -- `new Date()`, so it has to be parsed manually
+            TimeFmt.parseTimeM True TimeFmt.defaultTimeLocale
+                "%a %b %e %Y %H:%M:%S %Z%z"
+            . takeWhile (/='(') . T.unpack . T.decodeUtf8
+    let rateLimitRetryAfter = fmap Time.secondsToNominalDiffTime $
+            responseHeader res "Retry-After" >>= readBS
+    return HabiticaRateLimit {..}
+  where
+    readBS :: Read a => ByteString -> Maybe a
+    readBS = readMaybe . T.unpack . T.decodeUtf8
 
 newtype HabiticaRequest a = HabiticaRequest (ReaderT (Req.HttpConfig, HabiticaAuthHeaders) IO a)
   deriving (Functor, Applicative, Monad, MonadIO)

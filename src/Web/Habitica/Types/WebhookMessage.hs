@@ -15,7 +15,7 @@ import           Web.Habitica.Types.User    (Stats)
 data WebhookMessage
     = TaskActivity TaskActivity
 -- TODO:    | UserActivity
--- TODO:    | QuestActivity
+    | QuestActivity QuestActivity
     | GroupChatReceived GroupChatReceived
   deriving (Show, Eq, Ord)
 
@@ -25,6 +25,7 @@ instance FromJSON WebhookMessage where
         case webhookType :: Text of
             "taskActivity" -> TaskActivity <$> Aeson.parseJSON (Aeson.Object o)
             "groupChatReceived" -> GroupChatReceived <$> Aeson.parseJSON (Aeson.Object o)
+            "questActivity" -> GroupChatReceived <$> Aeson.parseJSON (Aeson.Object o)
             -- TODO: implement other decoders
             _ -> fail "decoder not implemented"
 
@@ -106,14 +107,14 @@ instance FromJSON UserMessageSender where
             <*> o .: "backer"
             <*> o .: "userStyles"
 
-data MessageGroup = MessageGroup
-    { mgId   :: UUID
-    , mgName :: Text
+data WebhookGroup = WebhookGroup
+    { wgId   :: UUID
+    , wgName :: Text
     } deriving (Show, Eq, Ord)
 
-instance FromJSON MessageGroup where
-    parseJSON = Aeson.withObject "MessageGroup" $ \o ->
-        MessageGroup
+instance FromJSON WebhookGroup where
+    parseJSON = Aeson.withObject "WebhookGroup" $ \o ->
+        WebhookGroup
             <$> o .: "id"
             <*> o .: "name"
 
@@ -157,7 +158,7 @@ instance FromJSON MessageChat where
         return MessageChat {..}
 
 data GroupChatReceived = GCR
-    { gcrGroup  :: MessageGroup
+    { gcrGroup  :: WebhookGroup
     , gcrChat   :: MessageChat
     , gcrUserId :: UUID
     } deriving (Show, Eq, Ord)
@@ -168,3 +169,37 @@ instance FromJSON GroupChatReceived where
             <$> o .: "group"
             <*> o .: "chat"
             <*> (o .: "user" >>= (.: "_id"))
+
+data QuestActivityType
+    = QuestStarted
+    | QuestFinished
+    | QuestInvited
+  deriving (Show, Eq, Ord)
+
+instance FromJSON QuestActivityType where
+    parseJSON = Aeson.withText "QuestActivityType" $ \case
+        "questStarted" -> return QuestStarted
+        "questFinished" -> return QuestFinished
+        "questInvited" -> return QuestInvited
+        _ -> fail "QuestActivityType must be one of: questStarted, questFinished, or questInvited"
+
+newtype QAQuest = QAQuest
+    { qaqQuestKey :: Text
+    } deriving (Show, Eq, Ord)
+
+instance FromJSON QAQuest where
+    parseJSON = Aeson.withObject "QAQuest" $ \o ->
+        QAQuest <$> o .: "key"
+
+data QuestActivity = QA
+    { qaType  :: QuestActivityType
+    , qaGroup :: WebhookGroup
+    , qaQuest :: QAQuest
+    } deriving (Show, Eq, Ord)
+
+instance FromJSON QuestActivity where
+    parseJSON = Aeson.withObject "QuestActivity" $ \o -> do
+        qaType <- o .: "type"
+        qaGroup <- o .: "group"
+        qaQuest <- o .: "quest"
+        return QA {..}

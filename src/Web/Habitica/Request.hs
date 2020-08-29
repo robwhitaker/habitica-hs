@@ -8,6 +8,7 @@ module Web.Habitica.Request
     , HabiticaResponse
     , xClient
     , habiticaHeaders
+    , habiticaHeadersFromText
     , defaultHabiticaHttpConfig
     , hideAPIKeyInExceptions
     , habiticaRequest
@@ -65,6 +66,12 @@ habiticaHeaders userId apiKey (XClient (maintainerId, appName)) =
         ]
   where
     clientString = UUID.toASCIIBytes maintainerId <> "-" <> T.encodeUtf8 appName
+
+habiticaHeadersFromText :: Text -> Text -> Text -> Maybe HabiticaAuthHeaders
+habiticaHeadersFromText userId apiKey appName = do
+    uid <- UUID.fromText userId
+    key <- UUID.fromText apiKey
+    return $ habiticaHeaders uid key (xClient uid appName)
 
 data HabiticaRateLimit = HabiticaRateLimit
     { rateLimitLimit      :: Int

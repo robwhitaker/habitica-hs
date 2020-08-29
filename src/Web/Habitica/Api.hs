@@ -20,10 +20,28 @@ data TaskTypeFilter
     | OnlyCompletedTodos
   deriving (Show, Eq, Ord)
 
+data GroupId
+    = GroupId UUID
+    | GroupParty
+    | GroupTavern
+  deriving (Show, Eq, Ord)
+
 getTask :: (MonadHttp m, HabiticaApi m) => UUID -> m (HabiticaResponse Task)
 getTask tId = do
     headers <- getAuthHeaders
     habiticaRequest GET ["tasks", UUID.toText tId] NoReqBody headers mempty
+
+-- TODO: Add other params (limit, lastId, etc.)
+getGroupMembers :: (MonadHttp m, HabiticaApi m) => GroupId -> m (HabiticaResponse [Member])
+getGroupMembers groupId = do
+    headers <- getAuthHeaders
+    let
+        gId =
+            case groupId of
+                GroupId uuid -> UUID.toText uuid
+                GroupParty   -> "party"
+                GroupTavern  -> "habitrpg"
+    habiticaRequest GET [ "groups", gId, "members" ] NoReqBody headers ("includeAllPublicFields" =: True)
 
 -- TODO: Due date is a possible filter but Habitica's docs don't describe the format
 getUserTasks
